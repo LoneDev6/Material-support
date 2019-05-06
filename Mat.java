@@ -1,10 +1,4 @@
-/** 
-  Based on Hex_27 work, edited by LoneDev and other Spigot members. 
-  https://www.spigotmc.org/threads/1-8-to-1-13-itemstack-material-version-support.329630/
-  
-  This is the original license:
----------------------------------------------------------
-  The MIT License (MIT)
+/** The MIT License (MIT)
  *
  * Copyright (c) 2018 Hex_27
  *
@@ -26,6 +20,8 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **/
+
+package dev.lone.EpicBackpacks;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -717,7 +713,7 @@ public enum Mat
     REPEATER(0, "DIODE", "DIODE_BLOCK_ON", "DIODE_BLOCK_OFF"),
     REPEATING_COMMAND_BLOCK(0, "COMMAND_REPEATING"),
     ROSE_BUSH(4, "DOUBLE_PLANT"),
-    ROSE_RED(1, "RED_DYE", "INK_SACK"),
+    RED_DYE(1, "ROSE_RED", "INK_SACK"),
     ROTTEN_FLESH(0, "ROTTEN_FLESH"),
     SADDLE(0, "SADDLE"),
     SALMON(1, "RAW_FISH"),
@@ -895,30 +891,36 @@ public enum Mat
     ZOMBIE_VILLAGER_SPAWN_EGG(0, "MONSTER_EGG"),
     ZOMBIE_WALL_HEAD(0, "SKULL","SKULL_ITEM"),
     ;
-    String[] m;
-    int data;
 
-    Material cachedMaterial = null;
+
+    private static HashMap<String, Material> cache = new HashMap<>();
 
     Mat(int data, String... m){
         this.m = m;
         this.data = data;
     }
 
-
+    String[] m;
+    int data;
     private static Boolean isNew = null;
-    public static boolean isNewVersion() {
+
+
+    public static boolean isNewVersion()
+    {
         return isNew != null ? isNew : (isNew = Material.getMaterial("RED_WOOL") != null);
     }
 
     private static HashMap<String, Mat> cachedSearch = new HashMap<>();
-    public static Mat requestXMaterial(String name, byte data){
-        if(cachedSearch.containsKey(name.toUpperCase()+","+data)){
+    public static Mat requestXMaterial(String name, byte data)
+    {
+        if(cachedSearch.containsKey(name.toUpperCase()+","+data))
             return cachedSearch.get(name.toUpperCase()+","+data);
-        }
-        for(Mat mat: Mat.values()){
-            for(String test:mat.m){
-                if(name.toUpperCase().equals(test) && ((byte)mat.data) == data){
+        for(Mat mat : Mat.values())
+        {
+            for(String test:mat.m)
+            {
+                if(name.toUpperCase().equals(test) && ((byte)mat.data) == data)
+                {
                     cachedSearch.put(test+","+data,mat);
                     return mat;
                 }
@@ -927,24 +929,26 @@ public enum Mat
         return null;
     }
 
-    public boolean isSameMaterial(ItemStack comp){
-        if(isNewVersion()){
+    public boolean isSameMaterial(ItemStack comp)
+    {
+        if(isNewVersion())
             return comp.getType() == this.getMaterial();
-        }
         if(comp.getType() == this.getMaterial() &&
-                (int) comp.getData().getData() == (int) this.data){
+                (int) comp.getData().getData() == (int) this.data)
+        {
             return true;
         }
+
         Mat xmat = fromMaterial(comp.getType());
-        if(isDamageable(xmat)){
-            if(this.getMaterial() == comp.getType()){
+
+        if(isDamageable(xmat))
+            if(this.getMaterial() == comp.getType())
                 return true;
-            }
-        }
         return false;
     }
 
-    public boolean isDamageable(Mat type){
+    public boolean isDamageable(Mat type)
+    {
         if(type == null) return false;
         String[] split = type.toString().split("_");
         int length = split.length;
@@ -997,22 +1001,6 @@ public enum Mat
         return null;
     }
 
-    public static Mat fromString(String key){
-        Mat xmat = null;
-        try{
-            xmat = Mat.valueOf(key);
-            return xmat;
-        }catch(IllegalArgumentException e){
-            String[] split = key.split(":");
-            if(split.length == 1){
-                xmat = requestXMaterial(key,(byte) 0);
-            }else{
-                xmat = requestXMaterial(split[0],(byte) Integer.parseInt(split[1]));
-            }
-            return xmat;
-        }
-    }
-
     public ItemStack getItemStack()
     {
         Material mat = getMaterial();
@@ -1031,16 +1019,17 @@ public enum Mat
             return mat;
 
         //if cache
-        if (cachedMaterial != null)
-            return cachedMaterial;
+        mat = cache.get(this.toString());
+        if (mat != null)
+            return mat;
 
         //else find the right one
         for (int i = 0; i < m.length; i++)
         {
             mat = Material.matchMaterial(m[i]);
             if (mat != null)
-                this.cachedMaterial = Material.valueOf(m[i]);
+                cache.put(this.toString(), Material.valueOf(m[i]));
         }
-        return this.cachedMaterial;
+        return mat;
     }
 }
